@@ -1,36 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Spelling Quest (Audio Only)</title>
+<style>
+body{
+  margin:0;
+  font-family:system-ui,Segoe UI,Arial;
+  background:#0b1220;
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+.app{
+  max-width:900px;
+  width:100%;
+  padding:20px;
+}
+button,input{
+  font-size:20px;
+  padding:14px;
+  border-radius:12px;
+}
+button{
+  background:#2c61ff;
+  color:white;
+  border:none;
+  margin:6px;
+}
+input{
+  width:100%;
+}
+.msg{
+  margin-top:10px;
+  min-height:40px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <h1>Spelling Quest</h1>
+  <p>Listen to the word. Type it. Pass 10 words.</p>
+
+  <button onclick="start()">▶ Start / Next Word</button>
+  <button onclick="hear()">🔊 Hear Again</button>
+
+  <input id="answer" placeholder="Type here…" />
+  <button onclick="check()">✅ Check</button>
+
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+/* ===== WORDS ===== */
+const WORDS = [
+  "because","before","around","first","found",
+  "would","where","right","little","always"
+];
+
+let index = 0;
+let passed = 0;
+
+/* ===== VOICE SETUP (WINDOWS SAFE) ===== */
 let VOICES = [];
 function loadVoices(){
-  VOICES = window.speechSynthesis.getVoices() || [];
+  VOICES = speechSynthesis.getVoices();
 }
-window.speechSynthesis.onvoiceschanged = loadVoices;
+speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
 function pickVoice(){
-  // Prefer common Windows voices if present
-  const preferred = [
-    "Microsoft Zira",
-    "Microsoft David",
-    "Microsoft Mark",
-    "Microsoft Aria",
-    "Microsoft Jenny"
-  ];
-  for (const name of preferred){
-    const v = VOICES.find(v => (v.name || "").includes(name));
-    if (v) return v;
-  }
-  // Otherwise pick any English voice
-  return VOICES.find(v => (v.lang || "").startsWith("en")) || VOICES[0];
+  const preferred = ["Zira","David","Mark","Aria","Jenny"];
+  return VOICES.find(v => preferred.some(p => v.name.includes(p)))
+      || VOICES.find(v => v.lang.startsWith("en"));
 }
 
-function speak(text, rate=1.0){
-  try{
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = rate;
-    u.pitch = 1.05;
-    u.lang = "en-US";
-    const v = pickVoice();
-    if (v) u.voice = v;
-    window.speechSynthesis.speak(u);
-  }catch(e){}
+function speak(text){
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.voice = pickVoice();
+  u.rate = 0.95;
+  speechSynthesis.speak(u);
 }
+
+/* ===== GAME LOGIC ===== */
+function start(){
+  if(index >= WORDS.length){
+    document.getElementById("msg").textContent = "🎉 Finished!";
+    speak("You finished the lesson!");
+    return;
+  }
+  speak("The word is " + WORDS[index]);
+}
+
+function hear(){
+  speak("The word is " + WORDS[index]);
+}
+
+function check(){
+  const a = document.getElementById("answer").value.toLowerCase().trim();
+  if(a === WORDS[index]){
+    passed++;
+    document.getElementById("msg").textContent = "✅ Correct!";
+    speak("Great job!");
+    index++;
+    document.getElementById("answer").value="";
+  }else{
+    document.getElementById("msg").textContent = "❌ Try again";
+    speak("Try again");
+  }
+}
+</script>
+</body>
+</html>
