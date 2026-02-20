@@ -1,118 +1,120 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Lincoln's Spelling Quest</title>
-<style>
-body{
-  margin:0;
-  font-family:system-ui,Segoe UI,Arial;
-  background:#0b1220;
-  color:#fff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
-}
-.app{
-  max-width:900px;
-  width:100%;
-  padding:20px;
-}
-button,input{
-  font-size:20px;
-  padding:14px;
-  border-radius:12px;
-}
-button{
-  background:#2c61ff;
-  color:white;
-  border:none;
-  margin:6px;
-}
-input{
-  width:100%;
-}
-.msg{
-  margin-top:10px;
-  min-height:40px;
-  font-weight:600;
-}
-</style>
-</head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lincoln's Spelling Quest</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#121b2f; --text:#e9eefc; --muted:#a9b6da;
+      --ok:#33d17a; --bad:#ff5c5c; --accent:#2c61ff; --btn:#1a2644;
+      --btn2:#22335c;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 600px at 50% -20%, #1a2c5e 0%, var(--bg) 60%);
+      color:var(--text);
+      min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+      padding:18px;
+    }
+    .app{width:min(980px, 100%); display:grid; gap:14px;}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius:18px;
+      padding:16px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+    h1{margin:0 0 6px; font-size: 28px;}
+    .sub{color:var(--muted); margin:0 0 10px; line-height:1.35; font-weight:600;}
+    .top{
+      display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      background: rgba(44,97,255,0.16);
+      border:1px solid rgba(44,97,255,0.25);
+      color:var(--text);
+      padding:8px 12px;
+      border-radius:999px;
+      font-weight:800;
+    }
+    .progress{
+      height:12px; border-radius:999px;
+      background: rgba(255,255,255,0.10);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.10);
+      flex:1; min-width:220px;
+    }
+    .bar{
+      height:100%;
+      background: linear-gradient(90deg, #2c61ff, #9b7bff);
+      width:0%;
+      transition: width 220ms ease;
+    }
+    .controls{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;}
+    button{
+      appearance:none; border:0; cursor:pointer;
+      background: var(--btn);
+      color: var(--text);
+      padding:14px 16px;           /* larger for touchscreen */
+      border-radius:14px;
+      font-size:18px;
+      font-weight:900;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10);
+      transition: transform .05s ease, background .2s ease;
+      user-select:none;
+    }
+    button:active{transform: translateY(1px);}
+    button.primary{background: linear-gradient(180deg, #2c61ff, #2a4bcc);}
+    button.alt{background: var(--btn2);}
+    button.good{background: rgba(51,209,122,0.20); box-shadow: inset 0 0 0 1px rgba(51,209,122,0.30);}
+    button.warn{background: rgba(255,92,92,0.18); box-shadow: inset 0 0 0 1px rgba(255,92,92,0.28);}
+    button:disabled{opacity:.45; cursor:not-allowed;}
+    .inputWrap{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    input[type="text"]{
+      flex:1 1 320px;
+      padding:16px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.16);
+      background: rgba(0,0,0,0.22);
+      color: var(--text);
+      font-size:22px;
+      font-weight:900;
+      letter-spacing: .8px;
+    }
+    .msg{
+      margin-top:12px;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.18);
+      min-height:56px;
+      display:flex; align-items:center;
+      color: var(--muted);
+      line-height:1.3;
+      font-weight:800;
+    }
+    .msg.ok{color:#c9ffe1; border-color: rgba(51,209,122,0.35); background: rgba(51,209,122,0.10);}
+    .msg.bad{color:#ffd2d2; border-color: rgba(255,92,92,0.35); background: rgba(255,92,92,0.10);}
 
-<body>
-<div class="app">
-  <h1>Lincoln's Spelling Quest</h1>
-  <p>Listen to the word. Type it. Pass 10 words.</p>
-
-  <button onclick="start()">▶ Start / Next Word</button>
-  <button onclick="hear()">🔊 Hear Again</button>
-
-  <input id="answer" placeholder="Type here…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-  <button onclick="check()">✅ Check</button>
-
-  <div class="msg" id="msg">Tap Start to begin.</div>
-</div>
-
-<script>
-/* ===== WORDS (hidden from learner) ===== */
-const WORDS = [
-  "because","before","around","first","found",
-  "would","where","right","little","always"
-];
-
-let index = 0;
-let passed = 0;
-
-/* ===== VOICE SETUP (Windows-friendly + female-first) ===== */
-let VOICES = [];
-function loadVoices(){
-  VOICES = window.speechSynthesis.getVoices() || [];
-}
-window.speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
-function pickVoice(){
-  // Prefer female-sounding Microsoft voices first (Windows)
-  const preferredFemale = ["Zira", "Aria", "Jenny"];
-
-  let v =
-    VOICES.find(v => preferredFemale.some(p => (v.name || "").includes(p))) ||
-    VOICES.find(v => (v.lang || "").startsWith("en") && /female|woman|zira|aria|jenny/i.test(v.name || "")) ||
-    VOICES.find(v => (v.lang || "").startsWith("en")) ||
-    VOICES[0];
-
-  return v;
-}
-
-function speak(text){
-  try{
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-
-    const voice = pickVoice();
-    if (voice) u.voice = voice;
-
-    // Slower by ~7% vs 0.95 (0.95 * 0.93 ≈ 0.88)
-    u.rate = 0.88;
-
-    // Slightly higher pitch tends to sound less robotic
-    u.pitch = 1.08;
-
-    u.lang = "en-US";
-    window.speechSynthesis.speak(u);
-  }catch(e){}
-}
-
-/* ===== GAME LOGIC ===== */
-function start(){
-  if(index >= WORDS.length){
-    document.getElementById("msg").textContent = "🎉 Finished! Great job, Lincoln!";
-    speak("You finished the lesson. Great job, Lincoln!");
-    return;
-  }
-  // Audio only: do not show the word on screen
-  document.getElementById("msg").textContent = `Word ${index+1} of ${WORDS.length}.`;
-  speak("Okay Lincoln. The word is " + WORDS[index]);
+    /* Tap keyboard */
+    .kbd{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: repeat(10, minmax(0,1fr));
+      gap:10px;                    /* larger gap for touch */
+    }
+    .k{
+      padding:16px 0;              /* bigger tap targets */
+      text-align:center;
+      border-radius:14px;
+      background: rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.10);
+      font-weight:1000;
+      font-size:20px;
+    }
+    .kbd .wide{grid-column: span 2;}
