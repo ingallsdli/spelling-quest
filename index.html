@@ -1,0 +1,36 @@
+let VOICES = [];
+function loadVoices(){
+  VOICES = window.speechSynthesis.getVoices() || [];
+}
+window.speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function pickVoice(){
+  // Prefer common Windows voices if present
+  const preferred = [
+    "Microsoft Zira",
+    "Microsoft David",
+    "Microsoft Mark",
+    "Microsoft Aria",
+    "Microsoft Jenny"
+  ];
+  for (const name of preferred){
+    const v = VOICES.find(v => (v.name || "").includes(name));
+    if (v) return v;
+  }
+  // Otherwise pick any English voice
+  return VOICES.find(v => (v.lang || "").startsWith("en")) || VOICES[0];
+}
+
+function speak(text, rate=1.0){
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = rate;
+    u.pitch = 1.05;
+    u.lang = "en-US";
+    const v = pickVoice();
+    if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
