@@ -209,14 +209,19 @@
 
 <script>
 /* ===== Build stamp ===== */
-document.getElementById("buildStamp").textContent = "2026-02-20-full-teach-500bank-v8";
+document.getElementById("buildStamp").textContent = "2026-02-20-reveal-after-2-faster-voice-v9";
 
 /* ===== Settings ===== */
 var REQUIRED_CORRECT = 10;
-var RATE = 0.71;       // slower voice
-var PITCH = 1.08;
+
+/* #1 Voice tuning: a bit faster + less robotic */
+var RATE = 0.82;     // was 0.71
+var PITCH = 1.02;    // was 1.08
+
+/* Difficulty mix per lesson */
 var DIFFICULTY_MIX = { easy: 4, medium: 4, hard: 2 };
 
+/* Praise variety */
 var PRAISE = [
   "Great job, Lincoln!",
   "You're rocking now, Lincoln!",
@@ -254,7 +259,7 @@ function buildWordBank(text, extras, target){
   return out.slice(0, Math.min(target, out.length));
 }
 
-/* Big common-word source (enough variety), plus extra fallback list */
+/* Big common-word source + extra fallback words */
 var WORD_BANK_TEXT = `
 the of to and a in is it you that he was for on are with as his they be at one have this from or had by word but what some
 we can out other were all there when up use your how said an each she which do their time if will way about many then them
@@ -319,7 +324,6 @@ three through time today together told too took town tree tried try turn two typ
 went were west what when where which while white who why will wind winter with within woman word work world would write wrong year yes yet young your
 `;
 
-/* Force 500 (or as many as possible if the source is unexpectedly short) */
 var WORD_BANK = buildWordBank(WORD_BANK_TEXT, EXTRA_WORDS, 500);
 
 /* ===== Difficulty selection ===== */
@@ -427,11 +431,20 @@ speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
 function pickFemaleVoice(){
+  // Prefer local/offline female voices if available
   var preferred = ["Zira","Aria","Jenny"];
   for (var p=0;p<preferred.length;p++){
     for (var i=0;i<VOICES.length;i++){
-      var name = (VOICES[i].name || "");
-      if (name.indexOf(preferred[p]) !== -1) return VOICES[i];
+      var v = VOICES[i];
+      var name = (v.name || "");
+      if (name.indexOf(preferred[p]) !== -1 && v.localService) return v;
+    }
+  }
+  for (var p2=0;p2<preferred.length;p2++){
+    for (var j=0;j<VOICES.length;j++){
+      var v2 = VOICES[j];
+      var name2 = (v2.name || "");
+      if (name2.indexOf(preferred[p2]) !== -1) return v2;
     }
   }
   for (var k=0;k<VOICES.length;k++){
@@ -441,13 +454,18 @@ function pickFemaleVoice(){
   return VOICES.length ? VOICES[0] : null;
 }
 
-function speak(text, after, afterDelayMs, rate){
+function speak(text, after, afterDelayMs){
   var u = new SpeechSynthesisUtterance(text);
   var v = pickFemaleVoice();
   if (v) u.voice = v;
   u.lang = "en-US";
-  u.rate = (typeof rate === "number") ? rate : RATE;
-  u.pitch = PITCH;
+
+  // Slight natural variation (tiny jitter) to sound less robotic
+  var rateJ = (Math.random()*0.04 - 0.02);   // ±0.02
+  var pitchJ = (Math.random()*0.04 - 0.02);  // ±0.02
+  u.rate = Math.max(0.74, Math.min(0.92, RATE + rateJ));
+  u.pitch = Math.max(0.90, Math.min(1.12, PITCH + pitchJ));
+  u.volume = 1;
 
   if (after){
     u.onend = function(){ setTimeout(after, afterDelayMs || 0); };
@@ -511,13 +529,12 @@ function buildNewLessonDifferentFromLast(){
     tries++;
   }
 
-  // fallback: force a tiny shuffle
   var forced = buildLessonWithDifficultyMix(WORD_BANK, DIFFICULTY_MIX);
   forced.reverse();
   return forced;
 }
 
-/* ===== Replacement word after teach-and-skip ===== */
+/* ===== Replacement word after reveal+skip ===== */
 function addReplacementWord(){
   var candidates = [];
   for (var i=0;i<WORD_BANK.length;i++){
@@ -528,32 +545,6 @@ function addReplacementWord(){
   var next = candidates[Math.floor(Math.random()*candidates.length)];
   lessonWords.push(next);
   usedLesson[next.w] = true;
-}
-
-/* ===== Teaching (letter + simple sound) ===== */
-var LETTER_SOUND = {
-  a:"ah", e:"eh", i:"ih", o:"ah", u:"uh",
-  b:"buh", c:"kuh", d:"duh", f:"fff", g:"guh", h:"huh", j:"juh", k:"kuh",
-  l:"lll", m:"mmm", n:"nnn", p:"puh", q:"kwuh", r:"err", s:"sss", t:"tuh",
-  v:"vvv", w:"wuh", x:"eks", y:"yuh", z:"zzz"
-};
-
-function buildTeachSpeech(word){
-  var w = (word || "").toLowerCase();
-  var parts = [];
-  parts.push("Nice try, Lincoln. Let's learn this word together.");
-  parts.push("The word is " + word + ".");
-  parts.push("Let's spell it.");
-
-  for (var i=0;i<w.length;i++){
-    var ch = w.charAt(i);
-    var name = ch.toUpperCase();
-    var sound = LETTER_SOUND[ch] || name;
-    parts.push(name + ". " + name + " says " + sound + ".");
-  }
-
-  parts.push("Okay. Let's try a new word.");
-  return parts.join(" ");
 }
 
 /* ===== Lesson management ===== */
@@ -653,24 +644,26 @@ function giveHint(){
 
   if (hintLevel === 0){
     setMsg("💡 Hint: Listen slowly.");
-    speak("Listen slowly: " + current.w + ".", null, 0, 0.60);
+    speak("Listen slowly: " + current.w + ".");
   } else if (hintLevel === 1){
     setMsg("💡 Hint: Number of letters.");
     speak("This word has " + current.w.length + " letters.");
-  } else if (hintLevel === 2){
-    setMsg("💡 Hint: Starting letter.");
-    speak("The word starts with " + current.w.charAt(0).toUpperCase() + ".");
   } else {
     setMsg("💡 Hint: Hear it again.");
     speak("The word is " + current.w + ".");
   }
 
-  hintLevel = Math.min(3, hintLevel + 1);
+  hintLevel = Math.min(2, hintLevel + 1);
 }
 
-function teachAndMoveOn(){
+function revealAndMoveOn(){
+  // Reveal does NOT count as correct
   skipped[current.w] = true;
+
+  // Add replacement so Lincoln can still reach 10 correct
   addReplacementWord();
+
+  // Move on
   pickNextWord();
 }
 
@@ -710,32 +703,30 @@ function checkAnswer(){
   } else {
     attempts++;
 
-    if (attempts >= 3){
+    /* #2 & #3: Reveal after 2 tries, show the word, say it once, move on (no sounding out) */
+    if (attempts >= 2){
       var correct = current.w;
 
       setMsg(
-        "Let’s learn this one together.<br>" +
+        "Nice try, Lincoln.<br>" +
         "The correct spelling is:<br>" +
         "<span style='font-size:44px; font-weight:1000; color:#ffffff; letter-spacing:2px;'>" +
         correct.toUpperCase() +
-        "</span><br><br>" +
-        "Now let’s spell it out loud!",
+        "</span>",
         "bad"
       );
 
-      var lessonSpeech = buildTeachSpeech(correct);
-
-      speak(lessonSpeech, function(){
-        teachAndMoveOn();
-      }, 1000);
+      speak("Nice try, Lincoln. The word is " + correct + ".", function(){
+        revealAndMoveOn();
+      }, 800);
 
       $("answer").value = "";
       return;
     }
 
+    // First wrong attempt (attempts == 1)
     setMsg("❌ Try again, Lincoln.", "bad");
     speak("Try again, Lincoln.");
-    if (attempts === 2) setTimeout(giveHint, 450);
     $("answer").focus();
   }
 }
@@ -809,7 +800,7 @@ $("answer").addEventListener("keydown", function(e){
   }
 });
 
-/* Init: build first lesson */
+/* Init */
 newLesson();
 setTimeout(loadVoices, 500);
 setTimeout(loadVoices, 1500);
