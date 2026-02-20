@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Spelling Quest (Audio Only)</title>
+<title>Lincoln's Spelling Quest</title>
 <style>
 body{
   margin:0;
@@ -37,26 +37,27 @@ input{
 .msg{
   margin-top:10px;
   min-height:40px;
+  font-weight:600;
 }
 </style>
 </head>
 
 <body>
 <div class="app">
-  <h1>Spelling Quest</h1>
+  <h1>Lincoln's Spelling Quest</h1>
   <p>Listen to the word. Type it. Pass 10 words.</p>
 
   <button onclick="start()">▶ Start / Next Word</button>
   <button onclick="hear()">🔊 Hear Again</button>
 
-  <input id="answer" placeholder="Type here…" />
+  <input id="answer" placeholder="Type here…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
   <button onclick="check()">✅ Check</button>
 
-  <div class="msg" id="msg"></div>
+  <div class="msg" id="msg">Tap Start to begin.</div>
 </div>
 
 <script>
-/* ===== WORDS ===== */
+/* ===== WORDS (hidden from learner) ===== */
 const WORDS = [
   "because","before","around","first","found",
   "would","where","right","little","always"
@@ -65,55 +66,53 @@ const WORDS = [
 let index = 0;
 let passed = 0;
 
-/* ===== VOICE SETUP (WINDOWS SAFE) ===== */
+/* ===== VOICE SETUP (Windows-friendly + female-first) ===== */
 let VOICES = [];
 function loadVoices(){
-  VOICES = speechSynthesis.getVoices();
+  VOICES = window.speechSynthesis.getVoices() || [];
 }
-speechSynthesis.onvoiceschanged = loadVoices;
+window.speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
 function pickVoice(){
-  const preferred = ["Zira","David","Mark","Aria","Jenny"];
-  return VOICES.find(v => preferred.some(p => v.name.includes(p)))
-      || VOICES.find(v => v.lang.startsWith("en"));
+  // Prefer female-sounding Microsoft voices first (Windows)
+  const preferredFemale = ["Zira", "Aria", "Jenny"];
+
+  let v =
+    VOICES.find(v => preferredFemale.some(p => (v.name || "").includes(p))) ||
+    VOICES.find(v => (v.lang || "").startsWith("en") && /female|woman|zira|aria|jenny/i.test(v.name || "")) ||
+    VOICES.find(v => (v.lang || "").startsWith("en")) ||
+    VOICES[0];
+
+  return v;
 }
 
 function speak(text){
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.voice = pickVoice();
-  u.rate = 0.95;
-  speechSynthesis.speak(u);
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+
+    const voice = pickVoice();
+    if (voice) u.voice = voice;
+
+    // Slower by ~7% vs 0.95 (0.95 * 0.93 ≈ 0.88)
+    u.rate = 0.88;
+
+    // Slightly higher pitch tends to sound less robotic
+    u.pitch = 1.08;
+
+    u.lang = "en-US";
+    window.speechSynthesis.speak(u);
+  }catch(e){}
 }
 
 /* ===== GAME LOGIC ===== */
 function start(){
   if(index >= WORDS.length){
-    document.getElementById("msg").textContent = "🎉 Finished!";
-    speak("You finished the lesson!");
+    document.getElementById("msg").textContent = "🎉 Finished! Great job, Lincoln!";
+    speak("You finished the lesson. Great job, Lincoln!");
     return;
   }
-  speak("The word is " + WORDS[index]);
-}
-
-function hear(){
-  speak("The word is " + WORDS[index]);
-}
-
-function check(){
-  const a = document.getElementById("answer").value.toLowerCase().trim();
-  if(a === WORDS[index]){
-    passed++;
-    document.getElementById("msg").textContent = "✅ Correct!";
-    speak("Great job!");
-    index++;
-    document.getElementById("answer").value="";
-  }else{
-    document.getElementById("msg").textContent = "❌ Try again";
-    speak("Try again");
-  }
-}
-</script>
-</body>
-</html>
+  // Audio only: do not show the word on screen
+  document.getElementById("msg").textContent = `Word ${index+1} of ${WORDS.length}.`;
+  speak("Okay Lincoln. The word is " + WORDS[index]);
