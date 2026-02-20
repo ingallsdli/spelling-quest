@@ -1,200 +1,74 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lincoln's Spelling Quest</title>
-  <style>
-    :root{--bg:#0b1220;--text:#e9eefc;--muted:#a9b6da;--btn:#1a2644;--btn2:#22335c;--ok:#33d17a;--bad:#ff5c5c;}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,Segoe UI,Arial;background:radial-gradient(1200px 600px at 50% -20%, #1a2c5e 0%, var(--bg) 60%);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;}
-    .card{width:min(980px,100%);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:16px;box-shadow:0 18px 40px rgba(0,0,0,.35);}
-    h1{margin:0 0 6px;font-size:28px;}
-    .sub{color:var(--muted);margin:0 0 10px;line-height:1.35;font-weight:600;}
-    .top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px;}
-    .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(44,97,255,.16);border:1px solid rgba(44,97,255,.25);padding:8px 12px;border-radius:999px;font-weight:1000;}
-    .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden;border:1px solid rgba(255,255,255,.10);flex:1;min-width:220px;}
-    .bar{height:100%;background:linear-gradient(90deg,#2c61ff,#9b7bff);width:0%;transition:width 220ms ease;}
-    button{border:0;cursor:pointer;background:var(--btn);color:var(--text);padding:14px 16px;border-radius:14px;font-size:18px;font-weight:1000;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);}
-    button.primary{background:linear-gradient(180deg,#2c61ff,#2a4bcc);}
-    button.alt{background:var(--btn2);}
-    button.good{background:rgba(51,209,122,.20);box-shadow:inset 0 0 0 1px rgba(51,209,122,.30);}
-    button.warn{background:rgba(255,92,92,.18);box-shadow:inset 0 0 0 1px rgba(255,92,92,.28);}
-    .inputWrap{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-    input{flex:1 1 320px;padding:16px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.22);color:var(--text);font-size:22px;font-weight:1000;letter-spacing:.8px;}
-    .msg{margin-top:12px;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.18);min-height:56px;display:flex;align-items:center;color:var(--muted);font-weight:900;}
-    .msg.ok{color:#c9ffe1;border-color:rgba(51,209,122,.35);background:rgba(51,209,122,.10);}
-    .msg.bad{color:#ffd2d2;border-color:rgba(255,92,92,.35);background:rgba(255,92,92,.10);}
-    .kbd{margin-top:14px;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:10px;}
-    .k{padding:16px 0;text-align:center;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);font-weight:1000;font-size:20px;}
-    .kbd .wider{grid-column:span 3;}
-    .tiny{font-size:12px;color:rgba(233,238,252,.7);margin-top:10px;line-height:1.35;}
-    .debug{margin-top:10px;padding:10px 12px;border-radius:14px;border:1px dashed rgba(255,255,255,.22);background:rgba(0,0,0,.18);color:rgba(233,238,252,.8);font-size:12px;line-height:1.35;white-space:pre-wrap;display:none;}
-  </style>
+<meta charset="utf-8">
+<title>Lincoln's Spelling Quest</title>
+<style>
+body{
+  font-family:Arial, sans-serif;
+  background:#0b1220;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+.app{max-width:600px;width:100%;padding:20px;}
+button,input{
+  font-size:20px;
+  padding:12px;
+  margin:6px 0;
+}
+</style>
 </head>
+
 <body>
-  <div class="card">
-    <h1>Lincoln's Spelling Quest</h1>
-    <p class="sub">Audio-only spelling. Listen to the word. Type it (or tap letters). Pass <b>10</b> words to finish.</p>
+<div class="app">
+  <h1>Lincoln's Spelling Quest</h1>
+  <p>Tap Start To Begin</p>
 
-    <div class="top">
-      <span class="pill">⭐ Progress: <span id="passedCount">0</span>/10</span>
-      <div class="progress"><div class="bar" id="bar"></div></div>
-      <span class="pill">🧩 JS: <span id="jsStatus">loading…</span></span>
-      <span class="pill">🗣️ Voices: <span id="voiceCount">0</span></span>
-      <button class="primary" onclick="startNext()">Start / Next Word</button>
-      <button class="alt" onclick="testVoice()">Test Voice</button>
-    </div>
+  <button onclick="start()">▶ Start</button>
+  <button onclick="repeat()">🔊 Hear Again</button>
 
-    <div class="inputWrap">
-      <input id="answer" placeholder="Type here…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-      <button class="alt" onclick="hearAgain()">🔊 Hear Again</button>
-      <button class="alt" onclick="giveHint()">💡 Hint</button>
-      <button class="good" onclick="checkAnswer()">✅ Check</button>
-      <button class="warn" onclick="clearAnswer()">⌫ Clear</button>
-    </div>
+  <input id="answer" placeholder="Type here">
+  <button onclick="check()">✅ Check</button>
 
-    <div class="msg" id="msg">Tap <b>Start</b> to begin. Then listen and spell.</div>
-    <div class="kbd" id="kbd"></div>
-
-    <div class="tiny">
-      If this page ever “looks right” but buttons do nothing, it usually means cached content or a JavaScript error.
-      GitHub Pages + browsers can cache content; forcing refresh and cache-busting fixes that. [1](https://github.com/orgs/community/discussions/49753)[2](https://github.com/orgs/community/discussions/19713)
-    </div>
-    <div class="debug" id="debug"></div>
-  </div>
+  <div id="msg"></div>
+</div>
 
 <script>
-/* Show errors on-screen */
-const debug = (t) => { const d=document.getElementById("debug"); d.style.display="block"; d.textContent=t; };
-window.onerror = (msg, url, line, col, err) => debug(`JavaScript error:\n${msg}\nLine: ${line}:${col}\n${url||""}\n${err?.stack||""}`);
+const WORDS = ["because","before","around"];
+let index = 0;
 
-/* Settings */
-const PASS_TARGET = 10;
-
-/* Words */
-const WORDS = [
-  { w:"because", chunk:"be + cause" },
-  { w:"before", chunk:"be + fore" },
-  { w:"around", chunk:"a + round" },
-  { w:"first", chunk:"furst" },
-  { w:"found", chunk:"fownd" },
-  { w:"would", chunk:"wood" },
-  { w:"where", chunk:"wair" },
-  { w:"right", chunk:"r + ight" },
-  { w:"little", chunk:"lit + tle" },
-  { w:"always", chunk:"all + ways" }
-];
-
-/* State */
-let passed = new Set();
-let current = null;
-let attempts = 0;
-let hintLevel = 0;
-
-/* UI helpers */
-const $ = (id)=>document.getElementById(id);
-function setMsg(text, cls=""){ const m=$("msg"); m.className="msg"+(cls?` ${cls}`:""); m.innerHTML=text; }
-function updateProgress(){
-  $("passedCount").textContent = passed.size;
-  $("bar").style.width = `${Math.min(100, (passed.size/PASS_TARGET)*100)}%`;
-}
-
-/* Speech */
-let VOICES = [];
-function loadVoices(){
-  VOICES = speechSynthesis.getVoices() || [];
-  $("voiceCount").textContent = VOICES.length;
-}
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
-function pickVoice(){
-  const pref = ["Zira","Aria","Jenny"];
-  for (const p of pref){
-    const v = VOICES.find(v => (v.name||"").includes(p));
-    if (v) return v;
-  }
-  return VOICES.find(v => (v.lang||"").startsWith("en")) || VOICES[0] || null;
-}
-
-function speak(text, rate=0.88){
+function speak(text){
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  const v = pickVoice();
-  if (v) u.voice = v;
-  u.rate = rate;
-  u.pitch = 1.08;
+  u.rate = 0.9;
+  u.pitch = 1.1;
   u.lang = "en-US";
   speechSynthesis.speak(u);
 }
 
-/* Game logic */
-function remaining(){ return WORDS.filter(o => !passed.has(o.w)); }
-function pickNext(){
-  if (passed.size >= PASS_TARGET){ setMsg("🎉 Lesson complete! Great job, Lincoln!", "ok"); speak("You did it, Lincoln! Great job!", 0.9); return; }
-  const rem = remaining();
-  if (rem.length === 0){ setMsg("🎉 Lesson complete! Great job, Lincoln!", "ok"); speak("You did it, Lincoln! Great job!", 0.9); return; }
-  current = rem[Math.floor(Math.random()*rem.length)];
-  attempts = 0; hintLevel = 0;
-  $("answer").value = ""; $("answer").focus();
-  setMsg("Listen carefully, then spell the word.");
-  speak("Okay Lincoln. The word is " + current.w + ".", 0.88);
+function start(){
+  speak("Okay Lincoln. The word is " + WORDS[index]);
 }
 
-function normalize(x){ return (x||"").toLowerCase().replace(/[^a-z']/g,'').trim(); }
-
-/* Global button funcs */
-function startNext(){ pickNext(); }
-function testVoice(){ setMsg("🔊 Testing voice…"); speak("Hello Lincoln. This is your spelling quest voice.", 0.88); }
-function hearAgain(){ if(!current) return setMsg("Tap <b>Start</b> first."); speak("The word is " + current.w + ".", 0.88); }
-function giveHint(){
-  if(!current) return setMsg("Tap <b>Start</b> first.");
-  if (hintLevel === 0){ setMsg("💡 Hint: Listen slowly."); speak("Listen slowly: " + current.w + ".", 0.75); }
-  else if (hintLevel === 1){ setMsg("💡 Hint: Number of letters."); speak("This word has " + current.w.length + " letters.", 0.9); }
-  else if (hintLevel === 2){ setMsg("💡 Hint: Starting letter."); speak("The word starts with " + current.w[0].toUpperCase() + ".", 0.9); }
-  else { setMsg("💡 Hint: Word chunk."); speak("Think of it like: " + (current.chunk||"listen to the sounds") + ".", 0.9); }
-  hintLevel = Math.min(3, hintLevel+1);
+function repeat(){
+  speak("The word is " + WORDS[index]);
 }
-function checkAnswer(){
-  if(!current) return setMsg("Tap <b>Start</b> first.");
-  const guess = normalize($("answer").value);
-  if(!guess){ setMsg("Type (or tap) your answer first."); speak("Type your answer first, Lincoln.", 0.9); return; }
-  if (guess === normalize(current.w)){
-    passed.add(current.w); updateProgress();
-    setMsg("✅ Correct!", "ok"); speak("Great job, Lincoln!", 0.92);
-    setTimeout(pickNext, 350);
-  } else {
-    attempts++; setMsg("❌ Try again.", "bad"); speak("Try again, Lincoln.", 0.92);
-    if (attempts === 2 || attempts === 3) setTimeout(giveHint, 450);
-    if (attempts >= 4) $("answer").value="";
-    $("answer").focus();
+
+function check(){
+  const a = document.getElementById("answer").value.toLowerCase().trim();
+  if(a === WORDS[index]){
+    document.getElementById("msg").textContent = "✅ Correct! Great job, Lincoln!";
+    speak("Great job, Lincoln!");
+    index = (index + 1) % WORDS.length;
+    document.getElementById("answer").value = "";
+  }else{
+    document.getElementById("msg").textContent = "❌ Try again";
+    speak("Try again, Lincoln.");
   }
 }
-function clearAnswer(){ $("answer").value=""; $("answer").focus(); }
-
-/* Tap keyboard */
-const keys = "qwertyuiopasdfghjklzxcvbnm".split("");
-function renderKbd(){
-  const kbd = $("kbd"); kbd.innerHTML="";
-  keys.forEach(ch=>{
-    const b=document.createElement("button"); b.className="k"; b.textContent=ch.toUpperCase();
-    b.onclick=()=>{ $("answer").value+=ch; $("answer").focus(); };
-    kbd.appendChild(b);
-  });
-  const wide=(label,fn)=>{ const b=document.createElement("button"); b.className="k wider"; b.textContent=label; b.onclick=fn; kbd.appendChild(b); };
-  wide("⌫ BACK", ()=>{ const v=$("answer").value; $("answer").value=v.slice(0,-1); $("answer").focus(); });
-  wide("CLEAR", clearAnswer);
-  wide("CHECK", checkAnswer);
-  wide("HEAR", hearAgain);
-  wide("HINT", giveHint);
-}
-
-/* Init */
-$("jsStatus").textContent = "OK";
-updateProgress();
-renderKbd();
-$("answer").addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); checkAnswer(); }});
 </script>
 </body>
 </html>
